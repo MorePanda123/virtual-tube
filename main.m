@@ -60,26 +60,4 @@ plot(route1(1:end,1),route1(1:end,2),'--');
 % figure,image(bw2,'CDataMapping','scaled');hold on;
 % plot(route(:,1),route(:,2),'.r');
 %% Ë³»¬Éú³ÉÏß
-% Untitled3
-% figure(2),hold on;
-% [col,~]=size(route1);
-% route1(1:col,3)=50;
-% route1(1:col,4)=rand(col,1)*0.1;
-% plot(route1(:,1),route1(:,2),'o');axis equal;
-% 
-% n_order=5;
-% total_time=50;
-% [f,ts,polys_x,polys_y,polys_r]=demo1_minimum_snap_simple(route1',total_time,n_order);
-% 
-% plot(f(1,:),f(2,:),'-r');
-% 
-% tangent=diff(f(1:2,:),1,2);
-% tangent=[tangent tangent(:,end)];
-% rot=[0 -1;1 0];
-% normal=rot*tangent;
-% normal=normal./sum(normal.^2,1).^0.5;
-% fo1=f(1:2,:)+f(3,:).*normal;
-% plot(fo1(1,:),fo1(2,:),'-b');
-% fo2=f(1:2,:)-f(3,:).*normal;
-% plot(fo2(1,:),fo2(2,:),'-b');
-% quiver3(f(1,:),f(2,:),f(3,:),f(1,:)+0.05*cos(f(4,:)),f(2,:)+0.05*sin(f(4,:)),f(3,:));
+tube_generation

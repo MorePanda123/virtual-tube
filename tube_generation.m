@@ -1,5 +1,5 @@
 % close all;
-figure(2),hold on;
+% figure(2),hold on;
 [col,~]=size(route1);
 
 global r_max
