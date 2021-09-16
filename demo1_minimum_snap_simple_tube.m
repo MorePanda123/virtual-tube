@@ -1,4 +1,4 @@
-function [f_out,ts,polys_x,polys_y]=demo1_minimum_snap_simple_tube(waypts,T,n_order)
+function [f_out,ts,ts_k_out]=demo1_minimum_snap_simple_tube(waypts,T,n_order)
 %     clear,clc;
 % waypts:路径点。1行表示x，2行表示y
 % T:总时间设置
@@ -12,12 +12,8 @@ function [f_out,ts,polys_x,polys_y]=demo1_minimum_snap_simple_tube(waypts,T,n_or
     ts = arrangeT(waypts,T);%时间分配
 
     % trajectory plan
-    for k=1:1
-        polys_x = minimum_snap_single_axis_simple(waypts(1,:),ts,n_order,v0(1),a0(1),v1(1),a1(1),2);
-        polys_y = minimum_snap_single_axis_simple(waypts(2,:),ts,n_order,v0(2),a0(2),v1(2),a1(2),2);
-%     [polys_x,polys_y] = minimum_snap_two_axis_simple(waypts(1,:),waypts(2,:),waypts(4,:),ts,n_order,v0(1),a0(1),v1(1),a1(1),2);
-%     ts=opti_time_seg(ts,polys_x,polys_y,polys_z,n_poly,n_coef,n_obj);
-    end
+    polys_x = minimum_snap_single_axis_simple(waypts(1,:),ts,n_order,v0(1),a0(1),v1(1),a1(1),2);
+    polys_y = minimum_snap_single_axis_simple(waypts(2,:),ts,n_order,v0(2),a0(2),v1(2),a1(2),2);
     %% result show
     fx=[];fx1=[];fx2=[];fy=[];fy1=[];fy2=[];fr1=[];fr2=[];ft=[];
     for i=2:size(polys_x,2)-1
@@ -28,30 +24,16 @@ function [f_out,ts,polys_x,polys_y]=demo1_minimum_snap_simple_tube(waypts,T,n_or
         yy = polys_vals(polys_y,ts,tt,0);
         yy1 = polys_vals(polys_y,ts,tt,1);
         yy2 = polys_vals(polys_y,ts,tt,2);
-%         [curvature_max1_out(i),t_max1_out(i),curvature_max2_out(i),t_max2_out(i)]=find_max_curvature(xx1,xx2,yy1,yy2,tt);
         fx=[fx xx];fx1=[fx1 xx1];fx2=[fx2 xx2];
         fy=[fy yy];fy1=[fy1 yy1];fy2=[fy2 yy2];
         ft=[ft tt];
     end
+    
     [ts_out,route_l_out,route_r_out,ts_k_out]=arrangeP1(fx1,fx2,fy1,fy2,ft);%重新规划半径时间段,使得相同弯曲方向的分为一段
     plot(fx(ts_k_out),fy(ts_k_out),'g*');
-%     for k=2:size(ts_out,2)
-%         tt=ft(ts_k_out(k-1):ts_k_out(k));
-%         xx1=fx1(ts_k_out(k-1):ts_k_out(k));
-%         yy1=fy1(ts_k_out(k-1):ts_k_out(k));
-%         xx2=fx2(ts_k_out(k-1):ts_k_out(k));
-%         yy2=fy2(ts_k_out(k-1):ts_k_out(k));
-%         [curvature_max1_out(k-1),t_max1_out(k-1)]=find_max_curvature(xx1,xx2,yy1,yy2,tt,route_out(k),1);
-%         [curvature_max2_out(k-1),t_max2_out(k-1)]=find_max_curvature(xx1,xx2,yy1,yy2,tt,route_out(k),-1);
-%     end
-%     for k=1:size(route_out,2)-1
-%         polys_r1_tmp = minimum_snap_single_radius_simple(route_out(k:k+1)',ts_out(k:k+1),n_order,v0(3),a0(3),v1(3),a1(3),2,curvature_max1_out(k),t_max1_out(k));
-%         polys_r2_tmp = minimum_snap_single_radius_simple(route_out(k:k+1)',ts_out(k:k+1),n_order,v0(3),a0(3),v1(3),a1(3),2,curvature_max2_out(k),t_max2_out(k));
-%         polys_r1(:,k)=polys_r1_tmp;
-%         polys_r2(:,k)=polys_r2_tmp;
-%     end
-        polys_r1 = minimum_snap_single_radius_simple(route_l_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1);
-        polys_r2 = minimum_snap_single_radius_simple(route_r_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1);
+    
+    polys_r1 = minimum_snap_single_radius_simple(route_l_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1);
+    polys_r2 = minimum_snap_single_radius_simple(route_r_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1);
   
     for k=2:size(polys_r1,2)
         tt = ft(ts_k_out(k-1):ts_k_out(k)-1);
@@ -199,10 +181,14 @@ beq(1:4,1) = [1/p0,v0,1/pe,ve]';
 
 % mid p constraints    (n_ploy-1 equations)
 neq = 4;
+% beq(1:neq,1)=0;
 % for i=1:n_poly-1
 %     neq=neq+1;
-%     Aeq(neq,n_coef*i+1:n_coef*(i+1)) = calc_tvec(ts(i+1),n_order,0);
-%     beq(neq) = waypts(i+1);
+%     Aeq(neq,n_coef*i+1:n_coef*(i+1)) = calc_tvec(ts(i+1)-0.1,n_order,0);
+%     beq(neq) = 1/waypts(i+1);
+%     neq=neq+1;
+%     Aeq(neq,n_coef*i+1:n_coef*(i+1)) = calc_tvec(ts(i)+0.1,n_order,0);
+%     beq(neq) = 1/waypts(i);
 % end
 
 % continuous constraints  ((n_poly-1)*3 equations)
@@ -211,20 +197,16 @@ for i=1:n_poly-1
     tvec_v = calc_tvec(ts(i+1),n_order,1);
     neq=neq+1;
     Aeq(neq,n_coef*(i-1)+1:n_coef*(i+1))=[tvec_p,-tvec_p];
+    beq(neq)=0;
     neq=neq+1;
     Aeq(neq,n_coef*(i-1)+1:n_coef*(i+1))=[tvec_v,-tvec_v];
+    beq(neq)=0;
+%     Aeq(neq,n_coef*(i-1)+1:n_coef*i)=tvec_v;
 end
 
 % 不等式约束
 Aieq=[];
 bieq=[];
-% Aieq = zeros(n_poly,n_poly*n_coef);
-% bieq = -curvature_max1_out';
-% for i=1:n_poly
-%     Aieq(i,(i-1)*n_coef+1:i*n_coef)= calc_tvec(t_max1_out(i),n_order,0);
-% end
-% Aieq=[-Aieq;-Aieq];
-% bieq=[bieq;-zeros(n_poly,1)];
 
 neq=0;
 for i=1:n_poly
@@ -232,20 +214,14 @@ for i=1:n_poly
     Aieq1(neq,n_coef*(i-1)+1:n_coef*i) = calc_tvec(ts(i+1),n_order,0);
     bieq1(neq,1) = 1/waypts(i+1);
 end
-% 
-% Aieq3(1:2,1:n_coef) = [calc_tvec(ts(1),n_order,0);
-%                      calc_tvec(ts(1),n_order,1)];
-% Aieq3(3:4,n_coef*(n_poly-1)+1:n_coef*n_poly) = ...
-%                     [calc_tvec(ts(end),n_order,0);
-%                      calc_tvec(ts(end),n_order,1)];
-% bieq3(1:4,1) = [1/p0,v0,1/pe,ve]';
+
 Aieq=[-Aieq1];
 bieq=[-bieq1];
 Aieq=[Aieq;-Aieq1];
-bieq=[bieq;-zeros(n_poly,1)];
+bieq=[bieq;-zeros(length(bieq),1)];
 
-w1=0.1;
-w2=1;
+w1=1;
+w2=0;
 w1=w1/(w1+w2);
 w2=w2/(w1+w2);
 

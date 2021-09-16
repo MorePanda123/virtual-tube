@@ -1,9 +1,9 @@
 close all;clear all;
 %% 随机生成地图
-map_x=32;
-map_y=18;
-obstacle.num=100;
-obstacle.rmax=0.8;
+map_x=100;
+map_y=100;
+obstacle.num=70;
+obstacle.rmax=6;
 obstacle.obs=draw_obstacle(map_x,map_y,obstacle.num,obstacle.rmax);
 %% 抓取图像生成逻辑数组
 f=getframe(gcf);
@@ -60,4 +60,4 @@ plot(route1(1:end,1),route1(1:end,2),'--');
 % figure,image(bw2,'CDataMapping','scaled');hold on;
 % plot(route(:,1),route(:,2),'.r');
 %% 顺滑生成线
-% tube_generation
+tube_generation
