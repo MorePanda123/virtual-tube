@@ -60,4 +60,4 @@ plot(route1(1:end,1),route1(1:end,2),'--');
 % figure,image(bw2,'CDataMapping','scaled');hold on;
 % plot(route(:,1),route(:,2),'.r');
 %% Ë³»¬Éú³ÉÏß
-tube_generation
+% tube_generation

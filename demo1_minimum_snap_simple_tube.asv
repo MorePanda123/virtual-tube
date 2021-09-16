@@ -34,7 +34,7 @@ function [f_out,ts,polys_x,polys_y]=demo1_minimum_snap_simple_tube(waypts,T,n_or
         ft=[ft tt];
     end
     [ts_out,route_l_out,route_r_out,ts_k_out]=arrangeP1(fx1,fx2,fy1,fy2,ft);%重新规划半径时间段,使得相同弯曲方向的分为一段
-    plot(fx(ts_k_out),fy(ts_k_out),'*');
+    plot(fx(ts_k_out),fy(ts_k_out),'g*');
 %     for k=2:size(ts_out,2)
 %         tt=ft(ts_k_out(k-1):ts_k_out(k));
 %         xx1=fx1(ts_k_out(k-1):ts_k_out(k));
@@ -178,11 +178,11 @@ for i=1:n_poly
 end
 b_all = zeros(size(Q_all,1),1);
 
-% 管道占面积尽可能地大
+
 Q_all1 = [];
 for i=1:n_poly
     %blkdiag:分块对角矩阵
-    Q_all1 = blkdiag(Q_all1,computeQ(n_order,0,ts(i),ts(i+1)));
+    Q_all1 = blkdiag(Q_all1,computeQ(n_order,2,ts(i),ts(i+1)));
 end
 
 
@@ -213,19 +213,18 @@ for i=1:n_poly-1
     Aeq(neq,n_coef*(i-1)+1:n_coef*(i+1))=[tvec_p,-tvec_p];
     neq=neq+1;
     Aeq(neq,n_coef*(i-1)+1:n_coef*(i+1))=[tvec_v,-tvec_v];
-
 end
 
 % 不等式约束
 Aieq=[];
 bieq=[];
-Aieq = zeros(n_poly,n_poly*n_coef);
-bieq = -curvature_max1_out';
-for i=1:n_poly
-    Aieq(i,(i-1)*n_coef+1:i*n_coef)= calc_tvec(t_max1_out(i),n_order,0);
-end
-Aieq=[-Aieq;-Aieq];
-bieq=[bieq;-zeros(n_poly,1)];
+% Aieq = zeros(n_poly,n_poly*n_coef);
+% bieq = -curvature_max1_out';
+% for i=1:n_poly
+%     Aieq(i,(i-1)*n_coef+1:i*n_coef)= calc_tvec(t_max1_out(i),n_order,0);
+% end
+% Aieq=[-Aieq;-Aieq];
+% bieq=[bieq;-zeros(n_poly,1)];
 
 neq=0;
 for i=1:n_poly
@@ -240,11 +239,15 @@ end
 %                     [calc_tvec(ts(end),n_order,0);
 %                      calc_tvec(ts(end),n_order,1)];
 % bieq3(1:4,1) = [1/p0,v0,1/pe,ve]';
-Aieq=[Aieq;-Aieq1];
-bieq=[bieq;-bieq1];
+Aieq=[-Aieq1];
+bieq=[-bieq1];
 Aieq=[Aieq;-Aieq1];
 bieq=[bieq;-zeros(n_poly,1)];
-p = quadprog(Q_all,b_all,Aieq,bieq,Aeq,beq);
+w1=0.1;
+w2=0.5;
+w1=w1/(w1+w2);
+w2=w2/(w1+w2);
+p = quadprog(w1*Q_all+w2*Q_all1,b_all,Aieq,bieq,Aeq,beq);
 
 polys = reshape(p,n_coef,n_poly);
 

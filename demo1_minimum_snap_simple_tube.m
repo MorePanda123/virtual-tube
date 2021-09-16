@@ -178,11 +178,11 @@ for i=1:n_poly
 end
 b_all = zeros(size(Q_all,1),1);
 
-% 管道占面积尽可能地大
+
 Q_all1 = [];
 for i=1:n_poly
     %blkdiag:分块对角矩阵
-    Q_all1 = blkdiag(Q_all1,computeQ(n_order,0,ts(i),ts(i+1)));
+    Q_all1 = blkdiag(Q_all1,computeQ(n_order,3,ts(i),ts(i+1)));
 end
 
 
@@ -243,7 +243,13 @@ Aieq=[-Aieq1];
 bieq=[-bieq1];
 Aieq=[Aieq;-Aieq1];
 bieq=[bieq;-zeros(n_poly,1)];
-p = quadprog(Q_all,b_all,Aieq,bieq,Aeq,beq);
+
+w1=0.1;
+w2=1;
+w1=w1/(w1+w2);
+w2=w2/(w1+w2);
+
+p = quadprog(w1*Q_all+w2*Q_all1,b_all,Aieq,bieq,Aeq,beq);
 
 polys = reshape(p,n_coef,n_poly);
 
