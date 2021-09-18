@@ -3,7 +3,7 @@ function [f_out,ts,ts_k_out]=demo1_minimum_snap_simple_tube(waypts,T,n_order)
 % waypts:路径点。1行表示x，2行表示y
 % T:总时间设置
 % n_order:多项式阶数
-%% 规划管道生成线
+    % 规划管道生成线
     v0 = [1,1,0,0];
     a0 = [0,0,0,0];
     v1 = [1,1,0,0];
@@ -14,7 +14,7 @@ function [f_out,ts,ts_k_out]=demo1_minimum_snap_simple_tube(waypts,T,n_order)
     % trajectory plan
     polys_x = minimum_snap_single_axis_simple(waypts(1,:),ts,n_order,v0(1),a0(1),v1(1),a1(1),2);
     polys_y = minimum_snap_single_axis_simple(waypts(2,:),ts,n_order,v0(2),a0(2),v1(2),a1(2),2);
-    %% result show
+    % 数值计算生成线
     fx=[];fx1=[];fx2=[];fy=[];fy1=[];fy2=[];fr1=[];fr2=[];ft=[];
     for i=2:size(polys_x,2)-1
         tt = ts(i):0.01:ts(i+1);
@@ -29,11 +29,11 @@ function [f_out,ts,ts_k_out]=demo1_minimum_snap_simple_tube(waypts,T,n_order)
         ft=[ft tt];
     end
     
-    [ts_out,route_l_out,route_r_out,ts_k_out]=arrangeP1(fx1,fx2,fy1,fy2,ft);%重新规划半径时间段,使得相同弯曲方向的分为一段
+    [ts_out,route_l_out,route_r_out,ts_k_out,mindis_r,mindis_l]=arrangeP1(fx,fx1,fx2,fy,fy1,fy2,ft);%重新规划半径时间段,使得相同弯曲方向的分为一段
     plot(fx(ts_k_out),fy(ts_k_out),'g*');
     
-    polys_r1 = minimum_snap_single_radius_simple(route_l_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1);
-    polys_r2 = minimum_snap_single_radius_simple(route_r_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1);
+    polys_r1 = minimum_snap_single_radius_simple(route_l_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1,mindis_l);
+    polys_r2 = minimum_snap_single_radius_simple(route_r_out',ts_out,n_order,v0(3),a0(3),v1(3),a1(3),1,mindis_r);
   
     for k=2:size(polys_r1,2)
         tt = ft(ts_k_out(k-1):ts_k_out(k)-1);
@@ -132,7 +132,7 @@ polys = reshape(p,n_coef,n_poly);
 
 end
 
-function polys = minimum_snap_single_radius_simple(waypts,ts,n_order,v0,a0,ve,ae,n_obj)
+function polys = minimum_snap_single_radius_simple(waypts,ts,n_order,v0,a0,ve,ae,n_obj,mindis_k)
 % input:
 % waypts:一维位置序列
 % ts:时间分配序列
@@ -164,7 +164,7 @@ b_all = zeros(size(Q_all,1),1);
 Q_all1 = [];
 for i=1:n_poly
     %blkdiag:分块对角矩阵
-    Q_all1 = blkdiag(Q_all1,computeQ(n_order,3,ts(i),ts(i+1)));
+    Q_all1 = blkdiag(Q_all1,computeQ(n_order,2,ts(i),ts(i+1)));
 end
 
 
@@ -213,15 +213,20 @@ for i=1:n_poly
     neq=neq+1;
     Aieq1(neq,n_coef*(i-1)+1:n_coef*i) = calc_tvec(ts(i+1),n_order,0);
     bieq1(neq,1) = 1/waypts(i+1);
+    if mindis_k(i,1)~=0
+        neq=neq+1;
+        Aieq1(neq,n_coef*(i-1)+1:n_coef*i) = calc_tvec(mindis_k(i,3),n_order,0);
+        bieq1(neq,1) = 1/mindis_k(i,2);
+    end
 end
 
 Aieq=[-Aieq1];
 bieq=[-bieq1];
-Aieq=[Aieq;-Aieq1];
-bieq=[bieq;-zeros(length(bieq),1)];
+% Aieq=[Aieq;-Aieq1];
+% bieq=[bieq;-zeros(length(bieq),1)];
 
 w1=1;
-w2=0;
+w2=10;
 w1=w1/(w1+w2);
 w2=w2/(w1+w2);
 

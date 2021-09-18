@@ -1,5 +1,6 @@
 close all;clear all;
 %% 随机生成地图
+global obstacle
 map_x=100;
 map_y=100;
 obstacle.num=70;
